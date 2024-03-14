@@ -1,0 +1,496 @@
+---
+title: "Forecasting The Total Business Sales"
+author: "Shweta A M Hatote & Devansh Pratap Singh"
+format: revealjs
+editor: source
+toc: true
+toc-depth: 1
+slide-number: true
+smaller: false
+scrollable: true 
+execute:
+  echo: true
+editor_options: 
+  chunk_output_type: console
+---
+
+# A Little About The Data
+
+## Total Business Sales
+
+-   Total business sales is the total amount of revenue generated from sales over a specific period of time.
+
+-   It is also known as total revenue or gross sales.
+
+## Total Business Inventory
+
+-   Total business inventory data is a statistical metric that measures the total amount of inventories held by manufacturers, wholesalers, and retailers in a country.
+
+-   It is also another economic indicator that provides insights into inventory levels across various industries.
+
+# Importance Of This Data
+
+## Total Business Sales
+
+-   It serves as a primary indicator of the market's financial performance.
+-   Businesses rely on sales data to formulate effective financial plans and budgeting strategies.
+-   Consistent and increasing sales figures can boost investor confidence, attracting potential stakeholders and contributing to stock market performance.
+
+## Total Business Inventory
+
+-   Total Business Inventory data is crucial for supply chain management, allowing businesses to optimize stock levels and prevent overstock or stockouts.
+-   Fluctuations in inventory levels can provide early signals of changes in demand and economic conditions.
+
+## Inventory to Sales Ratio
+
+The Inventories to Sales Ratio is a critical financial metric derived from the relationship between total business sales and total business inventory.
+
+$$ Ratio = \frac{TotalBusinessSales}{TotalBusinessInventory}\ $$
+
+## 
+
+-   The ratio serves as a benchmark for assessing the efficiency of inventory management.
+-   The ratio is an important indicator of a company's financial health.
+-   A high ratio may suggest overstocking, tying up capital and potentially leading to increased holding costs.
+-   On the other hand, a low ratio may indicate potential stockouts and missed sales opportunities.
+
+# Load Required Libraries
+
+## 
+
+```{r}
+  suppressMessages({
+  library(astsa)
+  library(bsts)
+  library(biwavelet)
+  library(corrplot)
+  library(dlm)
+  library(dplyr)
+  library(dygraphs)
+  library(fable)
+  library(forecast)
+  library(fpp3)
+  library(fredr)
+  library(imputeTS)
+  library(lubridate)
+  library(MARSS)
+  library(splines)
+  library(seasonal)
+  library(tidyverse)
+  library(tsbox)
+  library(vars)
+  library(reprex)
+  library(plotly)
+  library(prophet)
+  library(tseries)
+  library(Metrics)
+  library(WaveletComp)
+})
+```
+
+# Loading Datasets
+
+## 
+
+```{r}
+# My API Key
+fredr_set_key("052142bc981666b4ebcb1c8df98d006b")
+# Total Business Sales
+bussal <- fredr(series_id = "TOTBUSSMSA")
+# Total Business Inventories
+businv <- fredr(series_id = "BUSINV")
+# Summary of data
+summary(bussal)
+```
+
+## 
+
+```{r}
+summary(businv)
+```
+
+# Data Preparation
+
+## 
+
+-   Both of the series are monthly.
+-   Checked the date format.
+-   Adjusted the length of both data.
+-   Checked for missing value.
+
+```{r}
+# Filter data before the year 2005 for all series
+businv <- businv %>% filter(date >= as.Date("1992-01-01"))
+```
+
+## 
+
+![](Plots/Plot%201.png){fig-align="center" width="744" height="480"}
+
+# Empirical Data Analysis
+
+## Correlation & Visualization
+
+```{r}
+# Cross-correlation using Pearson method
+correlation <- cor(bussal$value, businv$value, method = "pearson")
+print(paste("Pearson Correlation coefficient:", correlation))
+```
+
+## 
+
+```{r}
+# Scatter plot with joint distribution
+ggplot() +
+  geom_point(data = bussal, aes(x = value, y = businv$value), color = "blue", alpha = 0.5) +
+  labs(x = "Total Business Sales", y = "Total Business Inventories", title = "Scatter Plot with Joint Distribution") +
+  theme_minimal()
+```
+
+## Decomposition
+
+```{r}
+# Convert data to time series objects
+bussal_ts <- ts(bussal$value, frequency = 12) 
+businv_ts <- ts(businv$value, frequency = 12)
+# Decomposition of both series
+bussal_decomp <- decompose(bussal_ts)
+businv_decomp <- decompose(businv_ts)
+```
+
+## 
+
+```{r}
+autoplot(bussal_decomp) + labs(title = "Decomposition of Sales")
+```
+
+## 
+
+```{r}
+autoplot(businv_decomp) + labs(title = "Decomposition of Inventories")
+```
+
+## ADF Test For Stationarity
+
+```{r}
+# Perform ADF to check stationarity of the series
+adf.test(bussal_ts)
+adf.test(businv_ts)
+```
+
+## 
+
+```{r}
+# Apply first order differencing to make the series stationary
+bussal_diff <- diff(bussal_ts)
+businv_diff <- diff(businv_ts)
+# Perform ADF test on differenced series to confirm stationarity
+adf.test(bussal_diff)
+adf.test(businv_diff)
+```
+
+## Cointegration By Johansen Test
+
+-   Cointegration is a statistical property that indicates a long-term equilibrium relationship between non-stationary time series.
+-   Two or more non-stationary series are said to be cointegrated if linear combination of them results in a stationary series.
+
+## 
+
+-   To test for cointegration, there are few tests such as the Engle-Granger test or the Johansen test.
+-   If in these tests the null hypothesis of no cointegration is rejected, it indicates that our series are cointegrated, implying they share a long-term relationship.
+
+## 
+
+#### Johansen Test
+
+-   The Johansen test estimates a vector autoregressive (VAR) model and tests for the presence of cointegration vectors using likelihood ratio tests.
+-   It provides information about the number of cointegration relationships present in the data and the corresponding cointegration vectors.
+-   It yields test statistics such as trace statistics and maximum eigenvalue statistics, which are compared against critical values to determine cointegration.
+
+## 
+
+-   Interpreting the results of these tests involves comparing the test statistics against critical values from appropriate distributions.
+-   If the test statistic exceeds the critical value, you reject the null hypothesis of no cointegration, indicating the presence of cointegration between the variables.
+-   Conversely, if the test statistic does not exceed the critical value, you fail to reject the null hypothesis, suggesting no cointegration.
+
+## 
+
+```{r}
+# Johansen Test
+johansen_test <- ca.jo(as.matrix(cbind(bussal_ts, businv_ts)), ecdet = "const", type = "trace", K = 2)
+# Summary of Johansen Test
+summary(johansen_test)
+```
+
+# RegARIMA Model
+
+## 
+
+RegARIMA models combine regression analysis with ARIMA modeling to capture both the linear relationship between the dependent and explanatory variables and the temporal dependencies within the data.
+
+#### Notations :-
+
+-Dependent Variable : $Y_t$
+
+-Explanatory variables : $X_t$
+
+-Error Term : $\epsilon_t$
+
+#### Mathematical Background :-
+
+$$Y_t = \beta_0 + \beta_1 X_t + \epsilon_t$$ where, $$\epsilon_t = \phi_1 \epsilon_{t-1} + \phi_2 \epsilon_{t-2} + ... + \theta_1\epsilon_{t-1} + \theta_2\epsilon_{t-2} + ... + \epsilon_t$$
+
+## 
+
+```{r}
+# Fit RegARIMA model
+regarima_model <- auto.arima(bussal_diff, xreg = businv_diff)
+# Forecast next month's difference using RegARIMA model
+regarima_forecast_diff <- forecast(regarima_model, xreg = tail(businv_diff, 1), h = 1)
+regarima_forecast_diff
+# Perform inverse differencing to obtain forecasted value in the original scale
+forecasted_diff_regarima <- regarima_forecast_diff$mean[1]
+forecasted_value_regarima <- forecasted_diff_regarima + bussal_ts[length(bussal_ts)]
+# Print RegARIMA forecasted value
+cat("RegARIMA forecasted value:", forecasted_value_regarima, "\n")
+```
+
+# TSLM - Time Series Linear Model
+
+## 
+
+-   TSLM is designed to work with time series data, where observations are collected sequentially over time.
+-   At its core, TSLM is a linear regression model that relates a dependent variable (response variable) to one or more independent variables (predictor variables).
+
+## 
+
+#### Notation :-
+
+-Dependent Variable : $Y_t$
+
+-Explanatory variables : $X_t$
+
+-Coefficients of the model : $\beta_0,\beta_1, ... , \beta_k$
+
+#### Mathematical Background :-
+
+$$Y_t = \beta_0 + \beta_1 X_{1,t} + ... + \beta_k X_{k,t} + \epsilon_t$$
+
+## 
+
+```{r}
+# Fit TSLM model
+tslm_model <- tslm(bussal_diff ~ businv_diff)
+# Forecast the next month's value using the tslm model with the provided covariate
+forecast_tslm <- forecast(tslm_model, newdata = data.frame(businv_diff = tail(businv_diff, 1)), h = 1)
+forecast_tslm
+# Extract the forecasted difference value for the next month
+forecast_diff <- forecast_tslm$mean[1]
+# Perform inverse differencing to obtain the forecasted value in the original scale for the next month
+forecasted_value <- forecast_diff + bussal_ts[length(bussal_ts)]
+cat("TSLM forecasted value:", forecasted_value, "\n")
+```
+
+# VAR Model
+
+## 
+
+VAR models can capture the temporal dependencies and interrelationships between multiple time series variables.
+
+#### Notations :-
+
+-Vector of multiple dependent variables : $Y_t$
+
+-Number of lags included in the model : $p$
+
+-Autoregressive coefficient matrices : $A_1, A_2, ... , A_p$
+
+#### Mathematical Background:
+
+$$Y_t = A_1Y_{t-1} + A_2Y_{t-2} + ... + A_pY_{t-p} + \epsilon_t$$
+
+## 
+
+```{r}
+# Combine the two stationary time series into a single data frame
+data_df_diff <- data.frame(bussal_diff, businv_diff)
+# Specify the VAR model with businv as exogenous variable
+var_model <- VAR(data_df_diff, p = 2, type = "const", exogen = data.frame(businv_diff))
+# Forecasting the next month value
+forecast <- predict(var_model, n.ahead = 1, dumvar = tail(data.frame(businv_diff), 1))
+# Extract the forecasted difference value
+forecast_diff <- forecast$fcst$`bussal_diff`[1]
+# Perform inverse differencing to obtain the forecasted value in the original scale
+final_forecast <- forecast_diff + bussal_ts[length(bussal_ts)]
+# Print the final forecast value
+cat("VAR forecasted value:", final_forecast, "\n")
+```
+
+# Comparison Between The Models
+
+## 
+
+```{r}
+# Get the actual value for the next month
+actual_value <- bussal_ts[length(bussal_ts)]
+
+rmse_reg_value <- rmse(actual_value, forecasted_value_regarima)
+rmse_tslm_value <- rmse(actual_value, forecasted_value)
+rmse_var_value <- rmse(actual_value, final_forecast)
+
+cat(" RegARIMA forecasted value:", forecasted_value_regarima, "\n","RMSE for RegArima forecast:", rmse_reg_value, "\n","\n","TSLM forecasted value:", forecasted_value, "\n","RMSE for TSLM forecast:", rmse_tslm_value,"\n", "\n","VAR forecasted value:", final_forecast, "\n","RMSE for VAR forecast:", rmse_var_value, "\n" )
+
+```
+
+## 
+
+```{r}
+# RegArima Model
+regarima_residuals <- resid(regarima_model)
+# TSLM Model
+tslm_residuals <- resid(tslm_model)
+
+Box.test(regarima_residuals, lag = 13, type = "Ljung-Box")
+Box.test(tslm_residuals, lag = 13, type = "Ljung-Box")
+#serial.test(var_model, lags.pt = 13, type = "PT.asymptotic")
+```
+
+## ![](Plots/VAR test.png){width="676" height="122"}
+
+The very low p-value indicate that there is significant autocorrelation present in the residuals of for all the three models.
+
+# Cross-Validation
+
+```{r, echo=FALSE}
+n <- length(bussal_diff)
+test_size <- 12 
+n_splits <- n - test_size  
+
+results <- data.frame(split = integer(n_splits), regarima_mae = double(n_splits), var_mae = double(n_splits), tslm_mae = double(n_splits))
+
+for(i in 1:n_splits) {
+  
+  train_end_index <- i + test_size - 1
+  bussal_train <- bussal_diff[1:train_end_index]
+  bussal_test <- bussal_diff[(train_end_index+1):(train_end_index+1)]
+  businv_train <- businv_diff[1:train_end_index]
+  businv_test <- businv_diff[(train_end_index+1):(train_end_index+1)]
+  
+  # RegARIMA Model
+  regarima_model <- auto.arima(bussal_train, xreg = businv_train)
+  regarima_forecast_diff <- forecast(regarima_model, xreg = tail(businv_train, 1), h = 1)
+  forecasted_diff_regarima <- regarima_forecast_diff$mean[1]
+  forecasted_value_regarima <- forecasted_diff_regarima + tail(bussal_ts, 1)
+  regarima_mae <- abs(forecasted_value_regarima - tail(bussal_ts, 1))
+  
+  
+  # VAR Model
+  data_var <- cbind(bussal_diff = bussal_train, businv_diff = businv_train)
+  var_model <- VAR(data_var, p = 2, type = "const")
+  forecast <- predict(var_model, n.ahead = 1, dumvar = tail(data.frame(businv_train), 1))
+  forecast_diff <- forecast$fcst$bussal_diff[1]
+  final_forecast <- forecast_diff + tail(bussal_ts, 1)
+  var_mae <- abs(final_forecast - tail(bussal_ts, 1))
+  
+  
+  # TSLM Model
+  tslm_model <- lm(bussal_train ~ businv_train)
+  forecast_tslm <- forecast(tslm_model, newdata = data.frame(businv_train = tail(businv_train, 1)), h = 1)
+  forecasted_diff_tslm <- forecast_tslm$mean[1]
+  forecasted_value_tslm <- forecasted_diff_tslm + tail(bussal_ts, 1)
+  tslm_mae <- abs(forecasted_value_tslm - tail(bussal_ts, 1))
+  
+  
+  results$split[i] <- i
+  results$regarima_mae[i] <- regarima_mae
+  results$var_mae[i] <- var_mae
+  results$tslm_mae[i] <- tslm_mae
+}
+
+mean_regarima_mae <- mean(results$regarima_mae)
+mean_var_mae <- mean(results$var_mae)
+mean_tslm_mae <- mean(results$tslm_mae)
+```
+
+```{r}
+cat(" H=12 REGARIMA MAE:", mean_regarima_mae, "\n", "\n", "H=12 Mean VAR MAE:", mean_var_mae, "\n", "\n", "H=12 Mean TSLM MAE:", mean_tslm_mae, "\n")
+```
+
+```{r, echo=FALSE}
+n <- length(bussal_diff)
+test_size <- 24  
+n_splits <- n - test_size  
+
+results <- data.frame(split = integer(n_splits), regarima_mae = double(n_splits), var_mae = double(n_splits), tslm_mae = double(n_splits))
+
+for(i in 1:n_splits) {
+  
+  train_end_index <- i + test_size - 1
+  bussal_train <- bussal_diff[1:train_end_index]
+  bussal_test <- bussal_diff[(train_end_index+1):(train_end_index+1)]
+  businv_train <- businv_diff[1:train_end_index]
+  businv_test <- businv_diff[(train_end_index+1):(train_end_index+1)]
+  
+  # RegARIMA Model
+  regarima_model <- auto.arima(bussal_train, xreg = businv_train)
+  regarima_forecast_diff <- forecast(regarima_model, xreg = tail(businv_train, 1), h = 1)
+  forecasted_diff_regarima <- regarima_forecast_diff$mean[1]
+  forecasted_value_regarima <- forecasted_diff_regarima + tail(bussal_ts, 1)
+  regarima_mae <- abs(forecasted_value_regarima - tail(bussal_ts, 1))
+  
+  
+  # VAR Model
+  data_var <- cbind(bussal_diff = bussal_train, businv_diff = businv_train)
+  var_model <- VAR(data_var, p = 2, type = "const")
+  forecast <- predict(var_model, n.ahead = 1, dumvar = tail(data.frame(businv_train), 1))
+  forecast_diff <- forecast$fcst$bussal_diff[1]
+  final_forecast <- forecast_diff + tail(bussal_ts, 1)
+  var_mae <- abs(final_forecast - tail(bussal_ts, 1))
+  
+  
+  # TSLM Model
+  tslm_model <- lm(bussal_train ~ businv_train)
+  forecast_tslm <- forecast(tslm_model, newdata = data.frame(businv_train = tail(businv_train, 1)), h = 1)
+  forecasted_diff_tslm <- forecast_tslm$mean[1]
+  forecasted_value_tslm <- forecasted_diff_tslm + tail(bussal_ts, 1)
+  tslm_mae <- abs(forecasted_value_tslm - tail(bussal_ts, 1))
+  
+  
+  results$split[i] <- i
+  results$regarima_mae[i] <- regarima_mae
+  results$var_mae[i] <- var_mae
+  results$tslm_mae[i] <- tslm_mae
+}
+
+mean_regarima_mae <- mean(results$regarima_mae)
+mean_var_mae <- mean(results$var_mae)
+mean_tslm_mae <- mean(results$tslm_mae)
+```
+
+```{r}
+cat(" H=24 REGARIMA MAE:", mean_regarima_mae, "\n", "\n", "H=24 Mean VAR MAE:", mean_var_mae, "\n", "\n", "H=24 Mean TSLM MAE:", mean_tslm_mae, "\n")
+```
+
+# Practical Implementations
+
+## Financial Planning & Budgeting:
+
+-Accurate sales forecasts are critical for financial planning and budgeting purposes.
+
+-Total business inventories can influence sales performance by impacting factors such as product availability, lead times, and pricing strategies.
+
+-By incorporating total business inventories into sales forecasting models, businesses can make more informed decisions regarding resource allocation, investment planning, and budgeting.
+
+## Market Analysis & Strategic Planning:
+
+-   Total business inventories data provide insights into market trends, competitor behavior, and overall economic conditions.
+-   Analyzing the relationship between total business inventories and sales enables businesses to identify opportunities and risks in the market and develop strategic plans to capitalize on them.
+-   Forecasting total business sales using total business inventories as a covariate supports strategic decision-making processes such as market expansion, product development, and pricing strategies.
+
+## Risk Management:
+
+-   Businesses face various risks related to sales volatility, inventory management, and market dynamics.
+-   By leveraging historical sales and inventory data, businesses can assess potential risks and uncertainties and develop contingency plans to mitigate them.
+-   Forecasting total business sales with total business inventories as a covariate helps businesses identify and manage risks associated with inventory imbalances, supply chain disruptions, and changes in customer demand.
+
+# Thank you!

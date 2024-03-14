@@ -1,0 +1,247 @@
+[
+  {
+    "objectID": "index.html#total-business-sales",
+    "href": "index.html#total-business-sales",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Total Business Sales",
+    "text": "Total Business Sales\n\nTotal business sales is the total amount of revenue generated from sales over a specific period of time.\nIt is also known as total revenue or gross sales."
+  },
+  {
+    "objectID": "index.html#total-business-inventory",
+    "href": "index.html#total-business-inventory",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Total Business Inventory",
+    "text": "Total Business Inventory\n\nTotal business inventory data is a statistical metric that measures the total amount of inventories held by manufacturers, wholesalers, and retailers in a country.\nIt is also another economic indicator that provides insights into inventory levels across various industries."
+  },
+  {
+    "objectID": "index.html#total-business-sales-1",
+    "href": "index.html#total-business-sales-1",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Total Business Sales",
+    "text": "Total Business Sales\n\nIt serves as a primary indicator of the market’s financial performance.\nBusinesses rely on sales data to formulate effective financial plans and budgeting strategies.\nConsistent and increasing sales figures can boost investor confidence, attracting potential stakeholders and contributing to stock market performance."
+  },
+  {
+    "objectID": "index.html#total-business-inventory-1",
+    "href": "index.html#total-business-inventory-1",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Total Business Inventory",
+    "text": "Total Business Inventory\n\nTotal Business Inventory data is crucial for supply chain management, allowing businesses to optimize stock levels and prevent overstock or stockouts.\nFluctuations in inventory levels can provide early signals of changes in demand and economic conditions."
+  },
+  {
+    "objectID": "index.html#inventory-to-sales-ratio",
+    "href": "index.html#inventory-to-sales-ratio",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Inventory to Sales Ratio",
+    "text": "Inventory to Sales Ratio\nThe Inventories to Sales Ratio is a critical financial metric derived from the relationship between total business sales and total business inventory.\n\\[ Ratio = \\frac{TotalBusinessSales}{TotalBusinessInventory}\\ \\]"
+  },
+  {
+    "objectID": "index.html#section",
+    "href": "index.html#section",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "The ratio serves as a benchmark for assessing the efficiency of inventory management.\nThe ratio is an important indicator of a company’s financial health.\nA high ratio may suggest overstocking, tying up capital and potentially leading to increased holding costs.\nOn the other hand, a low ratio may indicate potential stockouts and missed sales opportunities."
+  },
+  {
+    "objectID": "index.html#section-1",
+    "href": "index.html#section-1",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "suppressMessages({\n  library(astsa)\n  library(bsts)\n  library(biwavelet)\n  library(corrplot)\n  library(dlm)\n  library(dplyr)\n  library(dygraphs)\n  library(fable)\n  library(forecast)\n  library(fpp3)\n  library(fredr)\n  library(imputeTS)\n  library(lubridate)\n  library(MARSS)\n  library(splines)\n  library(seasonal)\n  library(tidyverse)\n  library(tsbox)\n  library(vars)\n  library(reprex)\n  library(plotly)\n  library(prophet)\n  library(tseries)\n  library(Metrics)\n  library(WaveletComp)\n})"
+  },
+  {
+    "objectID": "index.html#section-2",
+    "href": "index.html#section-2",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# My API Key\nfredr_set_key(\"052142bc981666b4ebcb1c8df98d006b\")\n# Total Business Sales\nbussal &lt;- fredr(series_id = \"TOTBUSSMSA\")\n# Total Business Inventories\nbusinv &lt;- fredr(series_id = \"BUSINV\")\n# Summary of data\nsummary(bussal)\n\n      date             series_id             value         realtime_start      \n Min.   :1992-01-01   Length:384         Min.   : 517626   Min.   :2024-03-14  \n 1st Qu.:1999-12-24   Class :character   1st Qu.: 805804   1st Qu.:2024-03-14  \n Median :2007-12-16   Mode  :character   Median :1071020   Median :2024-03-14  \n Mean   :2007-12-16                      Mean   :1082612   Mean   :2024-03-14  \n 3rd Qu.:2015-12-08                      3rd Qu.:1319076   3rd Qu.:2024-03-14  \n Max.   :2023-12-01                      Max.   :1877083   Max.   :2024-03-14  \n  realtime_end       \n Min.   :2024-03-14  \n 1st Qu.:2024-03-14  \n Median :2024-03-14  \n Mean   :2024-03-14  \n 3rd Qu.:2024-03-14  \n Max.   :2024-03-14"
+  },
+  {
+    "objectID": "index.html#section-3",
+    "href": "index.html#section-3",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "summary(businv)\n\n      date             series_id             value         realtime_start      \n Min.   :1980-12-01   Length:517         Min.   : 808292   Min.   :2024-03-14  \n 1st Qu.:1991-09-01   Class :character   1st Qu.:1112149   1st Qu.:2024-03-14  \n Median :2002-06-01   Mode  :character   Median :1391542   Median :2024-03-14  \n Mean   :2002-06-01                      Mean   :1471543   Mean   :2024-03-14  \n 3rd Qu.:2013-03-01                      3rd Qu.:1825103   3rd Qu.:2024-03-14  \n Max.   :2023-12-01                      Max.   :2556035   Max.   :2024-03-14  \n                                         NA's   :133                           \n  realtime_end       \n Min.   :2024-03-14  \n 1st Qu.:2024-03-14  \n Median :2024-03-14  \n Mean   :2024-03-14  \n 3rd Qu.:2024-03-14  \n Max.   :2024-03-14"
+  },
+  {
+    "objectID": "index.html#section-4",
+    "href": "index.html#section-4",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "Both of the series are monthly.\nChecked the date format.\nAdjusted the length of both data.\nChecked for missing value.\n\n\n# Filter data before the year 2005 for all series\nbusinv &lt;- businv %&gt;% filter(date &gt;= as.Date(\"1992-01-01\"))"
+  },
+  {
+    "objectID": "index.html#correlation-visualization",
+    "href": "index.html#correlation-visualization",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Correlation & Visualization",
+    "text": "Correlation & Visualization\n\n# Cross-correlation using Pearson method\ncorrelation &lt;- cor(bussal$value, businv$value, method = \"pearson\")\nprint(paste(\"Pearson Correlation coefficient:\", correlation))\n\n[1] \"Pearson Correlation coefficient: 0.9867149404804\""
+  },
+  {
+    "objectID": "index.html#section-6",
+    "href": "index.html#section-6",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Scatter plot with joint distribution\nggplot() +\n  geom_point(data = bussal, aes(x = value, y = businv$value), color = \"blue\", alpha = 0.5) +\n  labs(x = \"Total Business Sales\", y = \"Total Business Inventories\", title = \"Scatter Plot with Joint Distribution\") +\n  theme_minimal()"
+  },
+  {
+    "objectID": "index.html#decomposition",
+    "href": "index.html#decomposition",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Decomposition",
+    "text": "Decomposition\n\n# Convert data to time series objects\nbussal_ts &lt;- ts(bussal$value, frequency = 12) \nbusinv_ts &lt;- ts(businv$value, frequency = 12)\n# Decomposition of both series\nbussal_decomp &lt;- decompose(bussal_ts)\nbusinv_decomp &lt;- decompose(businv_ts)"
+  },
+  {
+    "objectID": "index.html#section-7",
+    "href": "index.html#section-7",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "autoplot(bussal_decomp) + labs(title = \"Decomposition of Sales\")"
+  },
+  {
+    "objectID": "index.html#section-8",
+    "href": "index.html#section-8",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "autoplot(businv_decomp) + labs(title = \"Decomposition of Inventories\")"
+  },
+  {
+    "objectID": "index.html#adf-test-for-stationarity",
+    "href": "index.html#adf-test-for-stationarity",
+    "title": "Forecasting The Total Business Sales",
+    "section": "ADF Test For Stationarity",
+    "text": "ADF Test For Stationarity\n\n# Perform ADF to check stationarity of the series\nadf.test(bussal_ts)\n\n\n    Augmented Dickey-Fuller Test\n\ndata:  bussal_ts\nDickey-Fuller = -2.8204, Lag order = 7, p-value = 0.2307\nalternative hypothesis: stationary\n\nadf.test(businv_ts)\n\n\n    Augmented Dickey-Fuller Test\n\ndata:  businv_ts\nDickey-Fuller = -2.046, Lag order = 7, p-value = 0.5577\nalternative hypothesis: stationary"
+  },
+  {
+    "objectID": "index.html#section-9",
+    "href": "index.html#section-9",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Apply first order differencing to make the series stationary\nbussal_diff &lt;- diff(bussal_ts)\nbusinv_diff &lt;- diff(businv_ts)\n# Perform ADF test on differenced series to confirm stationarity\nadf.test(bussal_diff)\n\n\n    Augmented Dickey-Fuller Test\n\ndata:  bussal_diff\nDickey-Fuller = -6.0041, Lag order = 7, p-value = 0.01\nalternative hypothesis: stationary\n\nadf.test(businv_diff)\n\n\n    Augmented Dickey-Fuller Test\n\ndata:  businv_diff\nDickey-Fuller = -5.0215, Lag order = 7, p-value = 0.01\nalternative hypothesis: stationary"
+  },
+  {
+    "objectID": "index.html#cointegration-by-johansen-test",
+    "href": "index.html#cointegration-by-johansen-test",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Cointegration By Johansen Test",
+    "text": "Cointegration By Johansen Test\n\nCointegration is a statistical property that indicates a long-term equilibrium relationship between non-stationary time series.\nTwo or more non-stationary series are said to be cointegrated if linear combination of them results in a stationary series."
+  },
+  {
+    "objectID": "index.html#section-10",
+    "href": "index.html#section-10",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "To test for cointegration, there are few tests such as the Engle-Granger test or the Johansen test.\nIf in these tests the null hypothesis of no cointegration is rejected, it indicates that our series are cointegrated, implying they share a long-term relationship."
+  },
+  {
+    "objectID": "index.html#section-11",
+    "href": "index.html#section-11",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "Johansen Test\n\nThe Johansen test estimates a vector autoregressive (VAR) model and tests for the presence of cointegration vectors using likelihood ratio tests.\nIt provides information about the number of cointegration relationships present in the data and the corresponding cointegration vectors.\nIt yields test statistics such as trace statistics and maximum eigenvalue statistics, which are compared against critical values to determine cointegration."
+  },
+  {
+    "objectID": "index.html#section-12",
+    "href": "index.html#section-12",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "Interpreting the results of these tests involves comparing the test statistics against critical values from appropriate distributions.\nIf the test statistic exceeds the critical value, you reject the null hypothesis of no cointegration, indicating the presence of cointegration between the variables.\nConversely, if the test statistic does not exceed the critical value, you fail to reject the null hypothesis, suggesting no cointegration."
+  },
+  {
+    "objectID": "index.html#section-13",
+    "href": "index.html#section-13",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Johansen Test\njohansen_test &lt;- ca.jo(as.matrix(cbind(bussal_ts, businv_ts)), ecdet = \"const\", type = \"trace\", K = 2)\n# Summary of Johansen Test\nsummary(johansen_test)\n\n\n###################### \n# Johansen-Procedure # \n###################### \n\nTest type: trace statistic , without linear trend and constant in cointegration \n\nEigenvalues (lambda):\n[1]  6.475150e-02  1.617271e-02 -5.040163e-18\n\nValues of teststatistic and critical values of test:\n\n          test 10pct  5pct  1pct\nr &lt;= 1 |  6.23  7.52  9.24 12.97\nr = 0  | 31.80 17.85 19.96 24.60\n\nEigenvectors, normalised to first column:\n(These are the cointegration relations)\n\n             bussal_ts.l2  businv_ts.l2      constant\nbussal_ts.l2    1.0000000      1.000000      1.000000\nbusinv_ts.l2   -0.7106891     -0.755565     -1.235393\nconstant     5432.3937665 -61580.923084 765041.738226\n\nWeights W:\n(This is the loading matrix)\n\n            bussal_ts.l2 businv_ts.l2      constant\nbussal_ts.d -0.007554819 -0.021385563 -1.317838e-16\nbusinv_ts.d  0.024111911 -0.001752221  1.502051e-16"
+  },
+  {
+    "objectID": "index.html#section-14",
+    "href": "index.html#section-14",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "RegARIMA models combine regression analysis with ARIMA modeling to capture both the linear relationship between the dependent and explanatory variables and the temporal dependencies within the data.\nNotations :-\n-Dependent Variable : \\(Y_t\\)\n-Explanatory variables : \\(X_t\\)\n-Error Term : \\(\\epsilon_t\\)\nMathematical Background :-\n\\[Y_t = \\beta_0 + \\beta_1 X_t + \\epsilon_t\\] where, \\[\\epsilon_t = \\phi_1 \\epsilon_{t-1} + \\phi_2 \\epsilon_{t-2} + ... + \\theta_1\\epsilon_{t-1} + \\theta_2\\epsilon_{t-2} + ... + \\epsilon_t\\]"
+  },
+  {
+    "objectID": "index.html#section-15",
+    "href": "index.html#section-15",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Fit RegARIMA model\nregarima_model &lt;- auto.arima(bussal_diff, xreg = businv_diff)\n# Forecast next month's difference using RegARIMA model\nregarima_forecast_diff &lt;- forecast(regarima_model, xreg = tail(businv_diff, 1), h = 1)\nregarima_forecast_diff\n\n       Point Forecast     Lo 80    Hi 80     Lo 95    Hi 95\nJan 33       4969.243 -17272.09 27210.58 -29045.95 38984.43\n\n# Perform inverse differencing to obtain forecasted value in the original scale\nforecasted_diff_regarima &lt;- regarima_forecast_diff$mean[1]\nforecasted_value_regarima &lt;- forecasted_diff_regarima + bussal_ts[length(bussal_ts)]\n# Print RegARIMA forecasted value\ncat(\"RegARIMA forecasted value:\", forecasted_value_regarima, \"\\n\")\n\nRegARIMA forecasted value: 1868577"
+  },
+  {
+    "objectID": "index.html#section-16",
+    "href": "index.html#section-16",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "TSLM is designed to work with time series data, where observations are collected sequentially over time.\nAt its core, TSLM is a linear regression model that relates a dependent variable (response variable) to one or more independent variables (predictor variables)."
+  },
+  {
+    "objectID": "index.html#section-17",
+    "href": "index.html#section-17",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "Notation :-\n-Dependent Variable : \\(Y_t\\)\n-Explanatory variables : \\(X_t\\)\n-Coefficients of the model : \\(\\beta_0,\\beta_1, ... , \\beta_k\\)\nMathematical Background :-\n\\[Y_t = \\beta_0 + \\beta_1 X_{1,t} + ... + \\beta_k X_{k,t} + \\epsilon_t\\]"
+  },
+  {
+    "objectID": "index.html#section-18",
+    "href": "index.html#section-18",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Fit TSLM model\ntslm_model &lt;- tslm(bussal_diff ~ businv_diff)\n# Forecast the next month's value using the tslm model with the provided covariate\nforecast_tslm &lt;- forecast(tslm_model, newdata = data.frame(businv_diff = tail(businv_diff, 1)), h = 1)\nforecast_tslm\n\n       Point Forecast     Lo 80   Hi 80     Lo 95    Hi 95\nJan 33       5722.417 -17116.26 28561.1 -29256.89 40701.72\n\n# Extract the forecasted difference value for the next month\nforecast_diff &lt;- forecast_tslm$mean[1]\n# Perform inverse differencing to obtain the forecasted value in the original scale for the next month\nforecasted_value &lt;- forecast_diff + bussal_ts[length(bussal_ts)]\ncat(\"TSLM forecasted value:\", forecasted_value, \"\\n\")\n\nTSLM forecasted value: 1869330"
+  },
+  {
+    "objectID": "index.html#section-19",
+    "href": "index.html#section-19",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "VAR models can capture the temporal dependencies and interrelationships between multiple time series variables.\nNotations :-\n-Vector of multiple dependent variables : \\(Y_t\\)\n-Number of lags included in the model : \\(p\\)\n-Autoregressive coefficient matrices : \\(A_1, A_2, ... , A_p\\)\nMathematical Background:\n\\[Y_t = A_1Y_{t-1} + A_2Y_{t-2} + ... + A_pY_{t-p} + \\epsilon_t\\]"
+  },
+  {
+    "objectID": "index.html#section-20",
+    "href": "index.html#section-20",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Combine the two stationary time series into a single data frame\ndata_df_diff &lt;- data.frame(bussal_diff, businv_diff)\n# Specify the VAR model with businv as exogenous variable\nvar_model &lt;- VAR(data_df_diff, p = 2, type = \"const\", exogen = data.frame(businv_diff))\n# Forecasting the next month value\nforecast &lt;- predict(var_model, n.ahead = 1, dumvar = tail(data.frame(businv_diff), 1))\n# Extract the forecasted difference value\nforecast_diff &lt;- forecast$fcst$`bussal_diff`[1]\n# Perform inverse differencing to obtain the forecasted value in the original scale\nfinal_forecast &lt;- forecast_diff + bussal_ts[length(bussal_ts)]\n# Print the final forecast value\ncat(\"VAR forecasted value:\", final_forecast, \"\\n\")\n\nVAR forecasted value: 1874559"
+  },
+  {
+    "objectID": "index.html#section-21",
+    "href": "index.html#section-21",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# Get the actual value for the next month\nactual_value &lt;- bussal_ts[length(bussal_ts)]\n\nrmse_reg_value &lt;- rmse(actual_value, forecasted_value_regarima)\nrmse_tslm_value &lt;- rmse(actual_value, forecasted_value)\nrmse_var_value &lt;- rmse(actual_value, final_forecast)\n\ncat(\" RegARIMA forecasted value:\", forecasted_value_regarima, \"\\n\",\"RMSE for RegArima forecast:\", rmse_reg_value, \"\\n\",\"\\n\",\"TSLM forecasted value:\", forecasted_value, \"\\n\",\"RMSE for TSLM forecast:\", rmse_tslm_value,\"\\n\", \"\\n\",\"VAR forecasted value:\", final_forecast, \"\\n\",\"RMSE for VAR forecast:\", rmse_var_value, \"\\n\" )\n\n RegARIMA forecasted value: 1868577 \n RMSE for RegArima forecast: 4969.243 \n \n TSLM forecasted value: 1869330 \n RMSE for TSLM forecast: 5722.417 \n \n VAR forecasted value: 1874559 \n RMSE for VAR forecast: 10951.2"
+  },
+  {
+    "objectID": "index.html#financial-planning-budgeting",
+    "href": "index.html#financial-planning-budgeting",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Financial Planning & Budgeting:",
+    "text": "Financial Planning & Budgeting:\n-Accurate sales forecasts are critical for financial planning and budgeting purposes.\n-Total business inventories can influence sales performance by impacting factors such as product availability, lead times, and pricing strategies.\n-By incorporating total business inventories into sales forecasting models, businesses can make more informed decisions regarding resource allocation, investment planning, and budgeting."
+  },
+  {
+    "objectID": "index.html#market-analysis-strategic-planning",
+    "href": "index.html#market-analysis-strategic-planning",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Market Analysis & Strategic Planning:",
+    "text": "Market Analysis & Strategic Planning:\n\nTotal business inventories data provide insights into market trends, competitor behavior, and overall economic conditions.\nAnalyzing the relationship between total business inventories and sales enables businesses to identify opportunities and risks in the market and develop strategic plans to capitalize on them.\nForecasting total business sales using total business inventories as a covariate supports strategic decision-making processes such as market expansion, product development, and pricing strategies."
+  },
+  {
+    "objectID": "index.html#risk-management",
+    "href": "index.html#risk-management",
+    "title": "Forecasting The Total Business Sales",
+    "section": "Risk Management:",
+    "text": "Risk Management:\n\nBusinesses face various risks related to sales volatility, inventory management, and market dynamics.\nBy leveraging historical sales and inventory data, businesses can assess potential risks and uncertainties and develop contingency plans to mitigate them.\nForecasting total business sales with total business inventories as a covariate helps businesses identify and manage risks associated with inventory imbalances, supply chain disruptions, and changes in customer demand."
+  },
+  {
+    "objectID": "index.html#section-22",
+    "href": "index.html#section-22",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "# RegArima Model\nregarima_residuals &lt;- resid(regarima_model)\n# TSLM Model\ntslm_residuals &lt;- resid(tslm_model)\n\nBox.test(regarima_residuals, lag = 13, type = \"Ljung-Box\")\n\n\n    Box-Ljung test\n\ndata:  regarima_residuals\nX-squared = 27.154, df = 13, p-value = 0.01185\n\nBox.test(tslm_residuals, lag = 13, type = \"Ljung-Box\")\n\n\n    Box-Ljung test\n\ndata:  tslm_residuals\nX-squared = 37.949, df = 13, p-value = 0.0002937\n\n#serial.test(var_model, lags.pt = 13, type = \"PT.asymptotic\")"
+  },
+  {
+    "objectID": "index.html#section-23",
+    "href": "index.html#section-23",
+    "title": "Forecasting The Total Business Sales",
+    "section": "",
+    "text": "The very low p-value indicate that there is significant autocorrelation present in the residuals of for all the three models."
+  }
+]

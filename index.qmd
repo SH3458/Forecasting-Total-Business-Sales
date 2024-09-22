@@ -1,6 +1,6 @@
 ---
 title: "Forecasting The Total Business Sales"
-author: "Shweta A M Hatote & Devansh Pratap Singh"
+author: "Shweta A M Hatote"
 format: revealjs
 editor: source
 toc: true
